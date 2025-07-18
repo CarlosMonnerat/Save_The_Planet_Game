@@ -1,92 +1,103 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
+import Image from 'next/image';
+import playerGif from '../../public/assets/gifs/player.gif';
 
 type PlayerShipProps = {
   containerWidth: number;
   containerHeight: number;
-  width?: number;
-  height?: number;
   onShoot: (x: number, y: number) => void;
+  onPositionChange: (pos: { x: number; y: number }) => void;
 };
 
 export default function PlayerShip({
   containerWidth,
   containerHeight,
-  width = 80,
-  height = 80,
   onShoot,
+  onPositionChange,
 }: PlayerShipProps) {
   const [position, setPosition] = useState({
-    x: containerWidth / 2 - width / 2,
-    y: containerHeight - height - 20,
+    x: containerWidth / 2 - 25,
+    y: containerHeight - 100,
   });
 
-  const speed = 8;
-  const keysRef = useRef<Record<string, boolean>>({});
-  const animationRef = useRef<number | null>(null);
+  const speed = 10;
+
+  // ✅ useRef para manter o estado das teclas entre renderizações
+  const keysRef = useRef({
+    ArrowLeft: false,
+    ArrowRight: false,
+    ArrowUp: false,
+    ArrowDown: false,
+    Space: false,
+  });
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      keysRef.current[e.key] = true;
-      if (e.code === 'Space') {
-        onShoot(position.x + width / 2, position.y); // dispara do meio da nave
+      if (e.code in keysRef.current) {
+        keysRef.current[e.code as keyof typeof keysRef.current] = true;
       }
     };
 
     const handleKeyUp = (e: KeyboardEvent) => {
-      keysRef.current[e.key] = false;
+      if (e.code in keysRef.current) {
+        keysRef.current[e.code as keyof typeof keysRef.current] = false;
+
+        if (e.code === 'Space') {
+          onShoot(position.x + 25, position.y); // Centro da nave
+        }
+      }
     };
 
-    const move = () => {
-      setPosition((pos) => {
-        let newX = pos.x;
-        let newY = pos.y;
-
-        if (keysRef.current['ArrowLeft'] || keysRef.current['a']) {
-          newX = Math.max(0, newX - speed);
-        }
-        if (keysRef.current['ArrowRight'] || keysRef.current['d']) {
-          newX = Math.min(containerWidth - width, newX + speed);
-        }
-        if (keysRef.current['ArrowUp'] || keysRef.current['w']) {
-          newY = Math.max(0, newY - speed);
-        }
-        if (keysRef.current['ArrowDown'] || keysRef.current['s']) {
-          newY = Math.min(containerHeight - height, newY + speed);
-        }
-
-        return { x: newX, y: newY };
-      });
-
-      animationRef.current = requestAnimationFrame(move);
-    };
-
-    animationRef.current = requestAnimationFrame(move);
     window.addEventListener('keydown', handleKeyDown);
     window.addEventListener('keyup', handleKeyUp);
-
     return () => {
-      if (animationRef.current) cancelAnimationFrame(animationRef.current);
       window.removeEventListener('keydown', handleKeyDown);
       window.removeEventListener('keyup', handleKeyUp);
     };
-  }, [containerWidth, containerHeight, height, width, onShoot, position.x, position.y]);
+  }, [position, onShoot]);
+
+  useEffect(() => {
+    const move = () => {
+      setPosition((prev) => {
+        let newX = prev.x;
+        let newY = prev.y;
+
+        if (keysRef.current.ArrowLeft) newX -= speed;
+        if (keysRef.current.ArrowRight) newX += speed;
+        if (keysRef.current.ArrowUp) newY -= speed;
+        if (keysRef.current.ArrowDown) newY += speed;
+
+        newX = Math.max(0, Math.min(containerWidth - 50, newX));
+        newY = Math.max(0, Math.min(containerHeight - 50, newY));
+
+        const newPos = { x: newX, y: newY };
+
+        if (newPos.x !== prev.x || newPos.y !== prev.y) {
+          onPositionChange(newPos);
+        }
+
+        return newPos;
+      });
+    };
+
+    const interval = setInterval(move, 16);
+    return () => clearInterval(interval);
+  }, [containerWidth, containerHeight, onPositionChange]);
 
   return (
-    <img
-      src="/assets/gifs/player.gif"
-      alt="Player Ship"
-      draggable={false}
+    <div
+      className="absolute"
       style={{
-        position: 'absolute',
         left: position.x,
         top: position.y,
-        width,
-        height,
-        userSelect: 'none',
-        pointerEvents: 'none',
+        width: 50,
+        height: 50,
+        zIndex: 10,
       }}
-    />
+    >
+      <Image src={playerGif} alt="Player Ship" width={50} height={50} />
+    </div>
   );
 }
