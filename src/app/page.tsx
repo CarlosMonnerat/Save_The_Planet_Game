@@ -8,7 +8,7 @@ export default function Home() {
         Save The Planet
       </h1>
 
-      <Link href="/pages/game">
+      <Link href="/game">
         <button className="px-8 py-4 bg-gradient-to-r from-cyan-500 to-blue-800 hover:from-cyan-400 hover:to-blue-700 text-white text-xl font-semibold tracking-wider rounded-full cursor-pointer shadow-[0_0_20px_rgba(0,255,255,0.4)] hover:shadow-[0_0_30px_rgba(0,255,255,0.7)] transition duration-300 ease-in-out">
            Jogar
         </button>
