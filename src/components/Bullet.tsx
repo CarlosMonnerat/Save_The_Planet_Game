@@ -35,7 +35,7 @@ export default function Bullet({ startX, startY, onOutOfBounds, speed = 10 }: Bu
     <div
       style={{
         position: 'absolute',
-        left: startX + 35, // ajusta centralização do tiro na nave
+        left: startX + 0, // ajusta centralização do tiro na nave
         top: y,
         width: 10,
         height: 20,

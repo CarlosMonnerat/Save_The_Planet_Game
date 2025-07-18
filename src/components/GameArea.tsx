@@ -2,69 +2,57 @@
 
 import { useEffect, useState } from 'react';
 import PlayerShip from './PlayerShip';
-import EnemyShip from './EnemyShip';
-import Bullet from './Bullet';
-
-type BulletData = {
-  id: number;
-  x: number;
-  y: number;
-};
+import Projectile from './Projectile';
 
 export default function GameArea() {
-  const [size, setSize] = useState({ width: 800, height: 600 });
-  const [bullets, setBullets] = useState<BulletData[]>([]);
-  const [bulletId, setBulletId] = useState(0);
-
-  useEffect(() => {
-    const updateSize = () => {
-      setSize({ width: window.innerWidth, height: window.innerHeight });
-    };
-    updateSize();
-    window.addEventListener('resize', updateSize);
-    return () => window.removeEventListener('resize', updateSize);
-  }, []);
+  const [projectiles, setProjectiles] = useState<{ x: number; y: number }[]>([]);
+  const [dimensions, setDimensions] = useState({
+    width: typeof window !== 'undefined' ? window.innerWidth : 0,
+    height: typeof window !== 'undefined' ? window.innerHeight : 0,
+  });
 
   const handleShoot = (x: number, y: number) => {
-    const id = bulletId;
-    setBulletId(id + 1);
-    setBullets((prev) => [...prev, { id, x, y }]);
+    setProjectiles((prev) => [...prev, { x, y }]);
   };
 
-  const removeBullet = (id: number) => {
-    setBullets((prev) => prev.filter((b) => b.id !== id));
-  };
+  // Atualiza o tamanho da tela se a janela for redimensionada
+  useEffect(() => {
+    const handleResize = () => {
+      setDimensions({ width: window.innerWidth, height: window.innerHeight });
+    };
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
+  // Atualiza a posição dos projéteis
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setProjectiles((prev) =>
+        prev
+          .map((p) => ({ x: p.x, y: p.y - 10 }))
+          .filter((p) => p.y > 0)
+      );
+    }, 16); // ~60fps
+    return () => clearInterval(interval);
+  }, []);
 
   return (
     <div
       style={{
-        position: 'relative',
-        width: size.width,
-        height: size.height,
-        backgroundColor: 'black',
+        width: '100vw',
+        height: '100vh',
         overflow: 'hidden',
+        position: 'relative',
+        background: 'black',
       }}
     >
       <PlayerShip
-        containerWidth={size.width}
-        containerHeight={size.height}
+        containerWidth={dimensions.width}
+        containerHeight={dimensions.height}
         onShoot={handleShoot}
       />
-
-      <EnemyShip
-        x={size.width / 2 - 40}
-        y={50}
-        width={80}
-        height={80}
-      />
-
-      {bullets.map((bullet) => (
-        <Bullet
-          key={bullet.id}
-          startX={bullet.x}
-          startY={bullet.y}
-          onOutOfBounds={() => removeBullet(bullet.id)}
-        />
+      {projectiles.map((p, i) => (
+        <Projectile key={i} x={p.x} y={p.y} />
       ))}
     </div>
   );

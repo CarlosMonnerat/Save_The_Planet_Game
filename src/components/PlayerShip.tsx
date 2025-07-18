@@ -13,8 +13,8 @@ type PlayerShipProps = {
 export default function PlayerShip({
   containerWidth,
   containerHeight,
-  width = 60,
-  height = 60,
+  width = 80,
+  height = 80,
   onShoot,
 }: PlayerShipProps) {
   const [position, setPosition] = useState({
@@ -30,7 +30,7 @@ export default function PlayerShip({
     const handleKeyDown = (e: KeyboardEvent) => {
       keysRef.current[e.key] = true;
       if (e.code === 'Space') {
-        onShoot(position.x, position.y);
+        onShoot(position.x + width / 2, position.y); // dispara do meio da nave
       }
     };
 
@@ -41,13 +41,22 @@ export default function PlayerShip({
     const move = () => {
       setPosition((pos) => {
         let newX = pos.x;
+        let newY = pos.y;
+
         if (keysRef.current['ArrowLeft'] || keysRef.current['a']) {
           newX = Math.max(0, newX - speed);
         }
         if (keysRef.current['ArrowRight'] || keysRef.current['d']) {
           newX = Math.min(containerWidth - width, newX + speed);
         }
-        return { ...pos, x: newX };
+        if (keysRef.current['ArrowUp'] || keysRef.current['w']) {
+          newY = Math.max(0, newY - speed);
+        }
+        if (keysRef.current['ArrowDown'] || keysRef.current['s']) {
+          newY = Math.min(containerHeight - height, newY + speed);
+        }
+
+        return { x: newX, y: newY };
       });
 
       animationRef.current = requestAnimationFrame(move);
@@ -62,7 +71,7 @@ export default function PlayerShip({
       window.removeEventListener('keydown', handleKeyDown);
       window.removeEventListener('keyup', handleKeyUp);
     };
-  }, [containerWidth, width, onShoot, position.x, position.y]);
+  }, [containerWidth, containerHeight, height, width, onShoot, position.x, position.y]);
 
   return (
     <img
