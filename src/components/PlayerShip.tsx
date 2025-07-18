@@ -1,12 +1,13 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useEffect, useRef, useState } from 'react';
 
 type PlayerShipProps = {
   containerWidth: number;
   containerHeight: number;
   width?: number;
   height?: number;
+  onShoot: (x: number, y: number) => void;
 };
 
 export default function PlayerShip({
@@ -14,43 +15,54 @@ export default function PlayerShip({
   containerHeight,
   width = 60,
   height = 60,
+  onShoot,
 }: PlayerShipProps) {
-  const [position, setPosition] = useState({ x: containerWidth / 2 - width / 2, y: containerHeight - height - 20 });
+  const [position, setPosition] = useState({
+    x: containerWidth / 2 - width / 2,
+    y: containerHeight - height - 20,
+  });
+
   const speed = 8;
+  const keysRef = useRef<Record<string, boolean>>({});
+  const animationRef = useRef<number | null>(null);
 
   useEffect(() => {
-    const keys: Record<string, boolean> = {};
-
     const handleKeyDown = (e: KeyboardEvent) => {
-      keys[e.key] = true;
+      keysRef.current[e.key] = true;
+      if (e.code === 'Space') {
+        onShoot(position.x, position.y);
+      }
     };
+
     const handleKeyUp = (e: KeyboardEvent) => {
-      keys[e.key] = false;
+      keysRef.current[e.key] = false;
     };
-
-    window.addEventListener('keydown', handleKeyDown);
-    window.addEventListener('keyup', handleKeyUp);
-
-    let animationFrameId: number;
 
     const move = () => {
       setPosition((pos) => {
         let newX = pos.x;
-        if (keys['ArrowLeft'] || keys['a']) newX = Math.max(0, newX - speed);
-        if (keys['ArrowRight'] || keys['d']) newX = Math.min(containerWidth - width, newX + speed);
-        return { ...pos, x: newX, y: pos.y };
+        if (keysRef.current['ArrowLeft'] || keysRef.current['a']) {
+          newX = Math.max(0, newX - speed);
+        }
+        if (keysRef.current['ArrowRight'] || keysRef.current['d']) {
+          newX = Math.min(containerWidth - width, newX + speed);
+        }
+        return { ...pos, x: newX };
       });
-      animationFrameId = requestAnimationFrame(move);
+
+      animationRef.current = requestAnimationFrame(move);
     };
 
-    animationFrameId = requestAnimationFrame(move);
+    animationRef.current = requestAnimationFrame(move);
+    window.addEventListener('keydown', handleKeyDown);
+    window.addEventListener('keyup', handleKeyUp);
 
     return () => {
+      if (animationRef.current) cancelAnimationFrame(animationRef.current);
       window.removeEventListener('keydown', handleKeyDown);
       window.removeEventListener('keyup', handleKeyUp);
-      cancelAnimationFrame(animationFrameId);
     };
-  }, [containerWidth, width, speed]);
+  }, [containerWidth, width, onShoot, position.x, position.y]);
 
   return (
     <img
@@ -69,4 +81,3 @@ export default function PlayerShip({
     />
   );
 }
-
