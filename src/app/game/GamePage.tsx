@@ -1,13 +1,5 @@
-'use client';
+import GameArea from '@/components/GameArea';
 
-import dynamic from 'next/dynamic';
-
-const GameCanvas = dynamic(() => import('@/components/GameCanvas'), { ssr: false });
-
-export default function GameClientPage() {
-  return (
-    <main className="flex items-center justify-center h-screen bg-black">
-      <GameCanvas />
-    </main>
-  );
+export default function GamePage() {
+  return <GameArea />;
 }
